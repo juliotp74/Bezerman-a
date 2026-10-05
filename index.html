@@ -1,0 +1,1112 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-950 text-slate-100">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bézier Mania - Master the Pen Tool</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Inter & JetBrains Mono Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    .font-mono {
+      font-family: 'JetBrains Mono', monospace;
+    }
+    /* Grid Canvas Pattern */
+    .bg-grid {
+      background-size: 24px 24px;
+      background-image: 
+        linear-gradient(to right, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+    }
+    /* Custom Neon Glow effects */
+    .glow-cyan {
+      box-shadow: 0 0 15px rgba(0, 229, 255, 0.3);
+    }
+    .glow-pink {
+      box-shadow: 0 0 15px rgba(255, 0, 127, 0.3);
+    }
+    .glow-gold {
+      box-shadow: 0 0 20px rgba(255, 215, 0, 0.4);
+    }
+    /* Animated Modal Entrance */
+    @keyframes popIn {
+      0% { transform: scale(0.85); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    .animate-pop-in {
+      animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    }
+    /* Pulse effect for start node indicator */
+    @keyframes pulseRing {
+      0% { transform: scale(0.9); opacity: 0.8; }
+      50% { transform: scale(1.3); opacity: 0.3; }
+      100% { transform: scale(0.9); opacity: 0.8; }
+    }
+    .pulse-ring {
+      animation: pulseRing 1.8s infinite ease-in-out;
+    }
+  </style>
+</head>
+<body class="h-full flex flex-col overflow-hidden bg-slate-950 text-slate-100">
+
+  <!-- HEADER BAR -->
+  <header class="bg-slate-900/90 border-b border-slate-800 px-4 py-3 flex flex-wrap items-center justify-between gap-3 shrink-0 z-10 backdrop-blur-md">
+    <div class="flex items-center space-x-3">
+      <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500 to-pink-500 flex items-center justify-center shadow-lg shadow-cyan-500/20">
+        <i class="fa-solid font-bold text-slate-950 text-xl flex items-center justify-center">✒️</i>
+      </div>
+      <div>
+        <h1 class="text-lg font-bold tracking-wide bg-gradient-to-r from-cyan-400 via-pink-400 to-amber-300 bg-clip-text text-transparent">
+          BÉZIER MANIA
+        </h1>
+        <p class="text-xs text-slate-400 font-medium hidden sm:block">Vector Pen Tool & Curve Training</p>
+      </div>
+    </div>
+
+    <!-- LEVEL SELECTOR TABS -->
+    <div class="flex items-center space-x-1 sm:space-x-2 bg-slate-950/80 p-1 rounded-xl border border-slate-800/80 overflow-x-auto max-w-full">
+      <button onclick="loadLevel(0)" id="lvl-btn-0" class="lvl-btn px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center space-x-1.5 whitespace-nowrap bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
+        <span>1: House</span>
+        <span id="star-lvl-0" class="text-amber-400 text-[10px]"></span>
+      </button>
+      <button onclick="loadLevel(1)" id="lvl-btn-1" class="lvl-btn px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-slate-200 transition-all flex items-center space-x-1.5 whitespace-nowrap">
+        <span>2: Circle</span>
+        <span id="star-lvl-1" class="text-amber-400 text-[10px]"></span>
+      </button>
+      <button onclick="loadLevel(2)" id="lvl-btn-2" class="lvl-btn px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-slate-200 transition-all flex items-center space-x-1.5 whitespace-nowrap">
+        <span>3: Heart</span>
+        <span id="star-lvl-2" class="text-amber-400 text-[10px]"></span>
+      </button>
+      <button onclick="loadLevel(3)" id="lvl-btn-3" class="lvl-btn px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-slate-200 transition-all flex items-center space-x-1.5 whitespace-nowrap">
+        <span>4: Car</span>
+        <span id="star-lvl-3" class="text-amber-400 text-[10px]"></span>
+      </button>
+      <button onclick="loadLevel(4)" id="lvl-btn-4" class="lvl-btn px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-slate-200 transition-all flex items-center space-x-1.5 whitespace-nowrap">
+        <span>5: Letter S</span>
+        <span id="star-lvl-4" class="text-amber-400 text-[10px]"></span>
+      </button>
+    </div>
+
+    <!-- STATS & AUDIO TOGGLE -->
+    <div class="flex items-center space-x-3">
+      <div class="hidden md:flex items-center space-x-2 bg-slate-800/50 px-3 py-1.5 rounded-lg border border-slate-700/50 text-xs">
+        <i class="fa-solid fa-trophy text-amber-400"></i>
+        <span class="text-slate-400">Total Score:</span>
+        <span id="total-score-display" class="font-bold text-amber-300 font-mono">0%</span>
+      </div>
+      <button id="audio-toggle" onclick="toggleAudio()" class="w-9 h-9 rounded-lg bg-slate-800 border border-slate-700 text-slate-300 hover:text-white flex items-center justify-center transition-colors">
+        <i id="audio-icon" class="fa-solid fa-volume-high text-xs"></i>
+      </button>
+    </div>
+  </header>
+
+  <!-- MAIN WORKSPACE -->
+  <main class="flex-1 flex flex-col md:flex-row overflow-hidden relative">
+
+    <!-- LEFT / MAIN CANVAS WORKSPACE -->
+    <div class="flex-1 flex flex-col relative bg-slate-900 bg-grid overflow-hidden">
+      
+      <!-- TOP HUD OVERLAY -->
+      <div class="absolute top-4 left-4 right-4 flex items-center justify-between pointer-events-none z-10">
+        <!-- Level Title & Instructions -->
+        <div class="bg-slate-900/90 backdrop-blur-md px-4 py-2.5 rounded-xl border border-slate-800 shadow-xl pointer-events-auto flex items-center space-x-3">
+          <div class="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-pulse"></div>
+          <div>
+            <h2 id="level-title" class="text-sm font-bold text-slate-100">Level 1: House</h2>
+            <p id="level-subtitle" class="text-xs text-slate-400">Click corners to draw straight lines.</p>
+          </div>
+        </div>
+
+        <!-- Node Counter Badge -->
+        <div class="bg-slate-900/90 backdrop-blur-md px-3.5 py-2 rounded-xl border border-slate-800 shadow-xl pointer-events-auto flex items-center space-x-2 font-mono text-xs">
+          <span class="text-slate-400">Nodes:</span>
+          <span id="node-count" class="font-bold text-cyan-400">0</span>
+          <span class="text-slate-500">/</span>
+          <span id="node-max" class="text-slate-300">5</span>
+        </div>
+      </div>
+
+      <!-- MAIN CANVAS WRAPPER -->
+      <div id="canvas-container" class="flex-1 w-full h-full relative flex items-center justify-center overflow-hidden cursor-crosshair">
+        <canvas id="game-canvas" width="800" height="500" class="max-w-full max-h-full object-contain rounded-lg shadow-2xl transition-all"></canvas>
+
+        <!-- Dynamic Handle Mode Indicator -->
+        <div id="split-mode-badge" class="hidden absolute top-16 right-4 bg-pink-500/20 text-pink-300 border border-pink-500/40 text-xs font-semibold px-3 py-1.5 rounded-lg shadow-lg backdrop-blur-md flex items-center space-x-1.5 animate-bounce">
+          <i class="fa-solid fa-scissors"></i>
+          <span>ALT: Split Handle Active</span>
+        </div>
+      </div>
+
+      <!-- BOTTOM FLOATING HUD / TIP -->
+      <div class="absolute bottom-4 left-1/2 -translate-x-1/2 w-[90%] max-w-xl pointer-events-none z-10">
+        <div id="hud-instruction" class="bg-slate-900/95 backdrop-blur-md px-4 py-2.5 rounded-xl border border-slate-800 shadow-2xl text-center text-xs text-cyan-300/90 font-medium pointer-events-auto flex items-center justify-center space-x-2">
+          <i class="fa-solid fa-circle-info text-cyan-400"></i>
+          <span id="instruction-text">Click anywhere to place your first anchor point.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT SIDEBAR CONTROLS -->
+    <aside class="w-full md:w-80 bg-slate-900 border-t md:border-t-0 md:border-l border-slate-800 p-4 flex flex-col justify-between shrink-0 space-y-4">
+      
+      <!-- TOOL ACTIONS -->
+      <div class="space-y-3">
+        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 px-1">Toolbox</h3>
+        
+        <div class="grid grid-cols-2 gap-2">
+          <!-- Undo Button -->
+          <button onclick="undoNode()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700/80 p-2.5 rounded-xl font-medium text-xs flex items-center justify-center space-x-2 transition-all active:scale-95">
+            <i class="fa-solid fa-rotate-left text-cyan-400"></i>
+            <span>Undo (Ctrl+Z)</span>
+          </button>
+
+          <!-- Reset Button -->
+          <button onclick="resetLevel()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700/80 p-2.5 rounded-xl font-medium text-xs flex items-center justify-center space-x-2 transition-all active:scale-95">
+            <i class="fa-solid fa-trash-can text-rose-400"></i>
+            <span>Reset</span>
+          </button>
+        </div>
+
+        <!-- Split Handle Toggle Button -->
+        <button id="split-toggle-btn" onclick="toggleSplitMode()" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700/80 p-3 rounded-xl font-semibold text-xs flex items-center justify-between transition-all active:scale-95">
+          <div class="flex items-center space-x-2">
+            <i class="fa-solid fa-scissors text-pink-400"></i>
+            <span>Split Handle (Alt Key)</span>
+          </div>
+          <span id="split-status" class="text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-slate-700 text-slate-400">OFF</span>
+        </button>
+
+        <!-- Toggle Hints -->
+        <button id="hints-toggle-btn" onclick="toggleHints()" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700/80 p-3 rounded-xl font-semibold text-xs flex items-center justify-between transition-all active:scale-95">
+          <div class="flex items-center space-x-2">
+            <i class="fa-solid fa-lightbulb text-amber-400"></i>
+            <span>Show Guide Rings</span>
+          </div>
+          <span id="hints-status" class="text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-amber-500/20 text-amber-300">ON</span>
+        </button>
+
+        <!-- Check Score / Evaluate Button -->
+        <button onclick="evaluateShape()" class="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-bold p-3.5 rounded-xl shadow-lg shadow-cyan-500/25 flex items-center justify-center space-x-2 transition-all active:scale-98">
+          <i class="fa-solid fa-circle-check text-slate-950"></i>
+          <span class="tracking-wide">Submit / Check Score</span>
+        </button>
+      </div>
+
+      <!-- KEYBOARD SHORTCUTS LEGEND -->
+      <div class="bg-slate-950/70 rounded-xl p-3.5 border border-slate-800/80 space-y-2 text-xs">
+        <h4 class="font-bold text-slate-300 flex items-center space-x-1.5">
+          <i class="fa-solid fa-keyboard text-cyan-400"></i>
+          <span>Controls & Gestures</span>
+        </h4>
+        <ul class="space-y-1.5 text-slate-400 text-[11px]">
+          <li class="flex items-center justify-between">
+            <span class="text-slate-300">Click Canvas</span>
+            <span class="font-mono bg-slate-800 px-1.5 py-0.5 rounded text-slate-400">Corner Point</span>
+          </li>
+          <li class="flex items-center justify-between">
+            <span class="text-slate-300">Click + Drag</span>
+            <span class="font-mono bg-slate-800 px-1.5 py-0.5 rounded text-slate-400">Smooth Curve</span>
+          </li>
+          <li class="flex items-center justify-between">
+            <span class="text-slate-300">Hold Alt / Toggle</span>
+            <span class="font-mono bg-slate-800 px-1.5 py-0.5 rounded text-slate-400">Break Cusp Handle</span>
+          </li>
+          <li class="flex items-center justify-between">
+            <span class="text-slate-300">Click Green Node</span>
+            <span class="font-mono bg-slate-800 px-1.5 py-0.5 rounded text-slate-400">Close Path</span>
+          </li>
+        </ul>
+      </div>
+    </aside>
+  </main>
+
+  <!-- COMPLETION / EVALUATION MODAL -->
+  <div id="completion-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-md p-4">
+    <div class="bg-slate-900 border border-slate-800 w-full max-w-md rounded-2xl p-6 shadow-2xl relative animate-pop-in text-center space-y-5">
+      
+      <!-- Trophy Icon -->
+      <div class="w-16 h-16 mx-auto rounded-full bg-gradient-to-tr from-amber-500 to-yellow-300 p-0.5 shadow-xl shadow-amber-500/20 flex items-center justify-center">
+        <div class="w-full h-full bg-slate-900 rounded-full flex items-center justify-center text-3xl">
+          🏆
+        </div>
+      </div>
+
+      <div>
+        <h3 id="modal-title" class="text-xl font-bold text-slate-100">Level Complete!</h3>
+        <p id="modal-subtitle" class="text-xs text-slate-400 mt-1">Great precision tracing vector curve</p>
+      </div>
+
+      <!-- Score Circular Badge -->
+      <div class="bg-slate-950/80 p-4 rounded-xl border border-slate-800 space-y-1">
+        <div class="text-xs font-semibold text-slate-400">Accuracy Score</div>
+        <div id="modal-score" class="text-4xl font-black font-mono bg-gradient-to-r from-cyan-400 via-pink-400 to-amber-300 bg-clip-text text-transparent">
+          96.5%
+        </div>
+        <!-- Stars Rating -->
+        <div id="modal-stars" class="text-amber-400 text-lg space-x-1 pt-1">
+          <i class="fa-solid fa-star"></i>
+          <i class="fa-solid fa-star"></i>
+          <i class="fa-solid fa-star"></i>
+        </div>
+      </div>
+
+      <!-- Node Efficiency Stat -->
+      <div class="flex items-center justify-between text-xs bg-slate-800/40 px-3.5 py-2 rounded-lg border border-slate-800">
+        <span class="text-slate-400">Node Efficiency:</span>
+        <span id="modal-nodes-stat" class="font-bold text-cyan-300 font-mono">4 / 4 Nodes Used</span>
+      </div>
+
+      <!-- Modal Action Buttons -->
+      <div class="grid grid-cols-2 gap-3 pt-2">
+        <button onclick="closeModal(); resetLevel();" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-semibold py-2.5 px-4 rounded-xl text-xs transition-all">
+          <i class="fa-solid fa-rotate-right mr-1.5"></i>Retry Level
+        </button>
+        <button id="next-level-btn" onclick="nextLevel()" class="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-bold py-2.5 px-4 rounded-xl text-xs shadow-lg shadow-cyan-500/25 transition-all">
+          Next Level <i class="fa-solid fa-arrow-right ml-1.5"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /* ====================================================================
+       WEB AUDIO SYNTHESIZER FOR SOUND EFFECTS
+       ==================================================================== */
+    class SoundSynth {
+      constructor() {
+        this.ctx = null;
+        this.enabled = true;
+      }
+
+      init() {
+        if (!this.ctx) {
+          const AudioContext = window.AudioContext || window.webkitAudioContext;
+          if (AudioContext) {
+            this.ctx = new AudioContext();
+          }
+        }
+        if (this.ctx && this.ctx.state === 'suspended') {
+          this.ctx.resume();
+        }
+      }
+
+      playClick() {
+        if (!this.enabled) return;
+        this.init();
+        if (!this.ctx) return;
+
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(600, this.ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(200, this.ctx.currentTime + 0.05);
+
+        gain.gain.setValueAtTime(0.15, this.ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.05);
+
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start();
+        osc.stop(this.ctx.currentTime + 0.05);
+      }
+
+      playNodeAdd() {
+        if (!this.enabled) return;
+        this.init();
+        if (!this.ctx) return;
+
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(440, this.ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(880, this.ctx.currentTime + 0.08);
+
+        gain.gain.setValueAtTime(0.2, this.ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.08);
+
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start();
+        osc.stop(this.ctx.currentTime + 0.08);
+      }
+
+      playClosePath() {
+        if (!this.enabled) return;
+        this.init();
+        if (!this.ctx) return;
+
+        const now = this.ctx.currentTime;
+        [523.25, 659.25, 783.99].forEach((freq, idx) => {
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.value = freq;
+          gain.gain.setValueAtTime(0.15, now + idx * 0.04);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.04 + 0.15);
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start(now + idx * 0.04);
+          osc.stop(now + idx * 0.04 + 0.15);
+        });
+      }
+
+      playSuccess() {
+        if (!this.enabled) return;
+        this.init();
+        if (!this.ctx) return;
+
+        const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+        const now = this.ctx.currentTime;
+
+        notes.forEach((freq, i) => {
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.value = freq;
+
+          gain.gain.setValueAtTime(0.2, now + i * 0.09);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.09 + 0.25);
+
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start(now + i * 0.09);
+          osc.stop(now + i * 0.09 + 0.25);
+        });
+      }
+
+      playReset() {
+        if (!this.enabled) return;
+        this.init();
+        if (!this.ctx) return;
+
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(300, this.ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(100, this.ctx.currentTime + 0.12);
+
+        gain.gain.setValueAtTime(0.12, this.ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.12);
+
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start();
+        osc.stop(this.ctx.currentTime + 0.12);
+      }
+    }
+
+    const synth = new SoundSynth();
+
+    function toggleAudio() {
+      synth.enabled = !synth.enabled;
+      const icon = document.getElementById('audio-icon');
+      if (synth.enabled) {
+        icon.className = 'fa-solid fa-volume-high text-xs';
+      } else {
+        icon.className = 'fa-solid fa-volume-xmark text-xs text-rose-400';
+      }
+    }
+
+    /* ====================================================================
+       LEVELS DEFINITION & TARGET SHAPES DATA
+       ==================================================================== */
+    const LEVELS = [
+      {
+        id: 0,
+        title: "Level 1: House / Diamond",
+        subtitle: "Click corners to draw straight lines. Hover green start node to close.",
+        maxNodes: 5,
+        nodes: [
+          { x: 250, y: 380, hIn: { x: 250, y: 380 }, hOut: { x: 250, y: 380 } },
+          { x: 550, y: 380, hIn: { x: 550, y: 380 }, hOut: { x: 550, y: 380 } },
+          { x: 550, y: 220, hIn: { x: 550, y: 220 }, hOut: { x: 550, y: 220 } },
+          { x: 400, y: 100, hIn: { x: 400, y: 100 }, hOut: { x: 400, y: 100 } },
+          { x: 250, y: 220, hIn: { x: 250, y: 220 }, hOut: { x: 250, y: 220 } }
+        ]
+      },
+      {
+        id: 1,
+        title: "Level 2: Circle / Oval",
+        subtitle: "Click & DRAG outward to pull handles and shape smooth curves.",
+        maxNodes: 4,
+        nodes: [
+          { x: 400, y: 120, hIn: { x: 270, y: 120 }, hOut: { x: 530, y: 120 } },
+          { x: 650, y: 270, hIn: { x: 650, y: 140 }, hOut: { x: 650, y: 400 } },
+          { x: 400, y: 420, hIn: { x: 530, y: 420 }, hOut: { x: 270, y: 420 } },
+          { x: 150, y: 270, hIn: { x: 150, y: 400 }, hOut: { x: 150, y: 140 } }
+        ]
+      },
+      {
+        id: 2,
+        title: "Level 3: Heart Contour",
+        subtitle: "Use ALT key (or tap Split Handle) at sharp notch points.",
+        maxNodes: 4,
+        nodes: [
+          { x: 400, y: 190, hIn: { x: 330, y: 120 }, hOut: { x: 470, y: 120 } },
+          { x: 630, y: 210, hIn: { x: 630, y: 120 }, hOut: { x: 630, y: 320 } },
+          { x: 400, y: 440, hIn: { x: 520, y: 380 }, hOut: { x: 280, y: 380 } },
+          { x: 170, y: 210, hIn: { x: 170, y: 320 }, hOut: { x: 170, y: 120 } }
+        ]
+      },
+      {
+        id: 3,
+        title: "Level 4: Car Silhouette",
+        subtitle: "Combine smooth roof curves with flat base segments.",
+        maxNodes: 7,
+        nodes: [
+          { x: 140, y: 340, hIn: { x: 140, y: 340 }, hOut: { x: 140, y: 280 } },
+          { x: 200, y: 250, hIn: { x: 160, y: 260 }, hOut: { x: 260, y: 220 } },
+          { x: 350, y: 150, hIn: { x: 290, y: 180 }, hOut: { x: 420, y: 150 } },
+          { x: 530, y: 150, hIn: { x: 470, y: 150 }, hOut: { x: 620, y: 210 } },
+          { x: 680, y: 260, hIn: { x: 650, y: 240 }, hOut: { x: 720, y: 290 } },
+          { x: 700, y: 340, hIn: { x: 720, y: 310 }, hOut: { x: 500, y: 340 } },
+          { x: 380, y: 340, hIn: { x: 480, y: 340 }, hOut: { x: 240, y: 340 } }
+        ]
+      },
+      {
+        id: 4,
+        title: "Level 5: Letter 'S' Contour",
+        subtitle: "Master sweeping organic double curves.",
+        maxNodes: 6,
+        nodes: [
+          { x: 550, y: 130, hIn: { x: 580, y: 130 }, hOut: { x: 420, y: 120 } },
+          { x: 300, y: 200, hIn: { x: 300, y: 140 }, hOut: { x: 300, y: 260 } },
+          { x: 500, y: 300, hIn: { x: 380, y: 240 }, hOut: { x: 580, y: 340 } },
+          { x: 500, y: 400, hIn: { x: 580, y: 350 }, hOut: { x: 380, y: 420 } },
+          { x: 250, y: 360, hIn: { x: 220, y: 420 }, hOut: { x: 220, y: 300 } },
+          { x: 380, y: 260, hIn: { x: 260, y: 260 }, hOut: { x: 480, y: 260 } }
+        ]
+      }
+    ];
+
+    /* ====================================================================
+       BÉZIER ENGINE STATE MANAGEMENT
+       ==================================================================== */
+    let currentLevelIndex = 0;
+    let userNodes = []; // Array of { x, y, hIn: {x,y}, hOut: {x,y}, type: 'symmetric'|'broken' }
+    let isClosed = false;
+    let isSplitMode = false;
+    let isAltPressed = false;
+    let showHints = true;
+    let levelScores = [0, 0, 0, 0, 0];
+
+    // Dragging & Interaction State
+    let isDragging = false;
+    let dragTarget = null; // { type: 'node'|'hIn'|'hOut', nodeIndex: number }
+    let mousePos = { x: 0, y: 0 };
+    let hoverNodeIndex = -1;
+    let hoverHandleType = null; // 'node' | 'hIn' | 'hOut'
+    let isStartNodeHovered = false;
+
+    // Canvas references
+    const canvas = document.getElementById('game-canvas');
+    const ctx = canvas.getContext('2d');
+
+    /* ====================================================================
+       EVENT LISTENERS & COORDINATE HELPERS
+       ==================================================================== */
+    function getCanvasPoint(e) {
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = canvas.width / rect.width;
+      const scaleY = canvas.height / rect.height;
+
+      let clientX = e.clientX;
+      let clientY = e.clientY;
+
+      if (e.touches && e.touches.length > 0) {
+        clientX = e.touches[0].clientX;
+        clientY = e.touches[0].clientY;
+      } else if (e.changedTouches && e.changedTouches.length > 0) {
+        clientX = e.changedTouches[0].clientX;
+        clientY = e.changedTouches[0].clientY;
+      }
+
+      return {
+        x: (clientX - rect.left) * scaleX,
+        y: (clientY - rect.top) * scaleY
+      };
+    }
+
+    // Keyboard Shortcuts (Alt key detection & Ctrl+Z)
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Alt') {
+        isAltPressed = true;
+        updateSplitBadge();
+      }
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
+        e.preventDefault();
+        undoNode();
+      }
+    });
+
+    window.addEventListener('keyup', (e) => {
+      if (e.key === 'Alt') {
+        isAltPressed = false;
+        updateSplitBadge();
+      }
+    });
+
+    // Pointer Events
+    canvas.addEventListener('mousedown', handlePointerDown);
+    canvas.addEventListener('mousemove', handlePointerMove);
+    window.addEventListener('mouseup', handlePointerUp);
+
+    // Touch Events
+    canvas.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      handlePointerDown(e);
+    }, { passive: false });
+
+    canvas.addEventListener('touchmove', (e) => {
+      e.preventDefault();
+      handlePointerMove(e);
+    }, { passive: false });
+
+    window.addEventListener('touchend', (e) => {
+      handlePointerUp(e);
+    });
+
+    /* ====================================================================
+       POINTER INTERACTION LOGIC
+       ==================================================================== */
+    function handlePointerDown(e) {
+      synth.init();
+      const pt = getCanvasPoint(e);
+      mousePos = pt;
+
+      const level = LEVELS[currentLevelIndex];
+
+      // 1. Check if clicking Start Node (Node 0) to close path
+      if (!isClosed && userNodes.length >= 3) {
+        const startNode = userNodes[0];
+        const dist = Math.hypot(pt.x - startNode.x, pt.y - startNode.y);
+        if (dist < 18) {
+          isClosed = true;
+          synth.playClosePath();
+          updateInstruction("Path closed! Click 'Submit / Check Score' or drag nodes to refine.");
+          render();
+          return;
+        }
+      }
+
+      // 2. Check if user clicks an existing node or handle to edit/drag
+      for (let i = 0; i < userNodes.length; i++) {
+        const n = userNodes[i];
+
+        // Node center
+        if (Math.hypot(pt.x - n.x, pt.y - n.y) < 14) {
+          isDragging = true;
+          dragTarget = { type: 'node', index: i };
+          synth.playClick();
+          return;
+        }
+
+        // Outgoing handle
+        if (Math.hypot(pt.x - n.hOut.x, pt.y - n.hOut.y) < 12) {
+          isDragging = true;
+          dragTarget = { type: 'hOut', index: i };
+          synth.playClick();
+          return;
+        }
+
+        // Incoming handle
+        if (Math.hypot(pt.x - n.hIn.x, pt.y - n.hIn.y) < 12) {
+          isDragging = true;
+          dragTarget = { type: 'hIn', index: i };
+          synth.playClick();
+          return;
+        }
+      }
+
+      // 3. Add new node if path is not closed & node limit not exceeded
+      if (!isClosed && userNodes.length < level.maxNodes) {
+        const newNode = {
+          x: pt.x,
+          y: pt.y,
+          hIn: { x: pt.x, y: pt.y },
+          hOut: { x: pt.x, y: pt.y },
+          type: (isSplitMode || isAltPressed) ? 'broken' : 'symmetric'
+        };
+
+        userNodes.push(newNode);
+        isDragging = true;
+        dragTarget = { type: 'hOut', index: userNodes.length - 1 };
+        
+        synth.playNodeAdd();
+        updateUI();
+
+        if (userNodes.length === level.maxNodes) {
+          updateInstruction("Max nodes reached! Click the green start node to close path.");
+        } else {
+          updateInstruction("Drag outward to pull handles, or click next point.");
+        }
+      }
+
+      render();
+    }
+
+    function handlePointerMove(e) {
+      const pt = getCanvasPoint(e);
+      mousePos = pt;
+
+      // Updating handle or node position during drag
+      if (isDragging && dragTarget) {
+        const n = userNodes[dragTarget.index];
+        const activeSplit = isSplitMode || isAltPressed;
+
+        if (dragTarget.type === 'node') {
+          // Move whole node & shift handles
+          const dx = pt.x - n.x;
+          const dy = pt.y - n.y;
+          n.x = pt.x;
+          n.y = pt.y;
+          n.hIn.x += dx;
+          n.hIn.y += dy;
+          n.hOut.x += dx;
+          n.hOut.y += dy;
+        } else if (dragTarget.type === 'hOut') {
+          n.hOut.x = pt.x;
+          n.hOut.y = pt.y;
+          if (activeSplit) {
+            n.type = 'broken';
+          } else if (n.type === 'symmetric') {
+            // Mirror handleIn across node center
+            const dx = pt.x - n.x;
+            const dy = pt.y - n.y;
+            n.hIn.x = n.x - dx;
+            n.hIn.y = n.y - dy;
+          }
+        } else if (dragTarget.type === 'hIn') {
+          n.hIn.x = pt.x;
+          n.hIn.y = pt.y;
+          if (activeSplit) {
+            n.type = 'broken';
+          } else if (n.type === 'symmetric') {
+            // Mirror handleOut across node center
+            const dx = pt.x - n.x;
+            const dy = pt.y - n.y;
+            n.hOut.x = n.x - dx;
+            n.hOut.y = n.y - dy;
+          }
+        }
+      } else {
+        // Detect hover state over start node
+        if (!isClosed && userNodes.length >= 3) {
+          const startNode = userNodes[0];
+          const dist = Math.hypot(pt.x - startNode.x, pt.y - startNode.y);
+          isStartNodeHovered = (dist < 18);
+        } else {
+          isStartNodeHovered = false;
+        }
+      }
+
+      render();
+    }
+
+    function handlePointerUp() {
+      if (isDragging) {
+        isDragging = false;
+        dragTarget = null;
+      }
+    }
+
+    /* ====================================================================
+       ACCURACY EVALUATION ENGINE (IoU Pixel Matching)
+       ==================================================================== */
+    function evaluateShape() {
+      if (userNodes.length < 3) {
+        updateInstruction("Please place at least 3 nodes to close a shape!");
+        return;
+      }
+
+      const evalWidth = 400;
+      const evalHeight = 250;
+      const level = LEVELS[currentLevelIndex];
+
+      // 1. Offscreen Canvas A: Target Path
+      const canvasA = document.createElement('canvas');
+      canvasA.width = evalWidth;
+      canvasA.height = evalHeight;
+      const ctxA = canvasA.getContext('2d');
+      ctxA.scale(evalWidth / 800, evalHeight / 500);
+
+      ctxA.fillStyle = '#FFFFFF';
+      ctxA.beginPath();
+      drawLevelTargetPath(ctxA, level);
+      ctxA.fill();
+
+      // 2. Offscreen Canvas B: User Path
+      const canvasB = document.createElement('canvas');
+      canvasB.width = evalWidth;
+      canvasB.height = evalHeight;
+      const ctxB = canvasB.getContext('2d');
+      ctxB.scale(evalWidth / 800, evalHeight / 500);
+
+      ctxB.fillStyle = '#FFFFFF';
+      ctxB.beginPath();
+      ctxB.moveTo(userNodes[0].x, userNodes[0].y);
+      for (let i = 0; i < userNodes.length; i++) {
+        const curr = userNodes[i];
+        const next = userNodes[(i + 1) % userNodes.length];
+        ctxB.bezierCurveTo(curr.hOut.x, curr.hOut.y, next.hIn.x, next.hIn.y, next.x, next.y);
+      }
+      ctxB.closePath();
+      ctxB.fill();
+
+      // 3. Pixel Comparison (Intersection over Union)
+      const imgA = ctxA.getImageData(0, 0, evalWidth, evalHeight).data;
+      const imgB = ctxB.getImageData(0, 0, evalWidth, evalHeight).data;
+
+      let intersection = 0;
+      let union = 0;
+
+      for (let i = 3; i < imgA.length; i += 4) {
+        const a = imgA[i] > 128;
+        const b = imgB[i] > 128;
+        if (a || b) {
+          union++;
+          if (a && b) {
+            intersection++;
+          }
+        }
+      }
+
+      let score = 0;
+      if (union > 0) {
+        const iou = intersection / union;
+        // Non-linear scaling for player friendliness
+        score = Math.pow(iou, 0.65) * 100;
+        score = Math.min(100, Math.round(score * 10) / 10);
+      }
+
+      // Record level score
+      levelScores[currentLevelIndex] = Math.max(levelScores[currentLevelIndex], score);
+      updateTotalScore();
+
+      // Trigger Modal
+      showCompletionModal(score);
+    }
+
+    /* ====================================================================
+       CANVAS RENDERING PIPELINE
+       ==================================================================== */
+    function render() {
+      // Clear canvas
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      const level = LEVELS[currentLevelIndex];
+
+      // 1. Draw Target Shape Outline (Gold Dashed Line)
+      ctx.save();
+      ctx.strokeStyle = '#ffd700';
+      ctx.lineWidth = 2.5;
+      ctx.setLineDash([6, 6]);
+      ctx.shadowColor = 'rgba(255, 215, 0, 0.3)';
+      ctx.shadowBlur = 8;
+      ctx.beginPath();
+      drawLevelTargetPath(ctx, level);
+      ctx.stroke();
+      ctx.restore();
+
+      // 2. Draw Target Guide Anchor Rings (if hints enabled)
+      if (showHints) {
+        level.nodes.forEach((tn, idx) => {
+          ctx.save();
+          ctx.strokeStyle = 'rgba(255, 215, 0, 0.4)';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.arc(tn.x, tn.y, 8, 0, Math.PI * 2);
+          ctx.stroke();
+
+          // Handle direction whiskers hint
+          if (tn.hOut.x !== tn.x || tn.hOut.y !== tn.y) {
+            ctx.strokeStyle = 'rgba(255, 215, 0, 0.25)';
+            ctx.setLineDash([2, 4]);
+            ctx.beginPath();
+            ctx.moveTo(tn.hIn.x, tn.hIn.y);
+            ctx.lineTo(tn.hOut.x, tn.hOut.y);
+            ctx.stroke();
+          }
+          ctx.restore();
+        });
+      }
+
+      // 3. Draw User Vector Path
+      if (userNodes.length > 0) {
+        ctx.save();
+        ctx.strokeStyle = '#00e5ff';
+        ctx.fillStyle = 'rgba(0, 229, 255, 0.15)';
+        ctx.lineWidth = 3;
+        ctx.shadowColor = 'rgba(0, 229, 255, 0.4)';
+        ctx.shadowBlur = 10;
+
+        ctx.beginPath();
+        ctx.moveTo(userNodes[0].x, userNodes[0].y);
+
+        for (let i = 0; i < userNodes.length - 1; i++) {
+          const curr = userNodes[i];
+          const next = userNodes[i + 1];
+          ctx.bezierCurveTo(curr.hOut.x, curr.hOut.y, next.hIn.x, next.hIn.y, next.x, next.y);
+        }
+
+        if (isClosed) {
+          const last = userNodes[userNodes.length - 1];
+          const start = userNodes[0];
+          ctx.bezierCurveTo(last.hOut.x, last.hOut.y, start.hIn.x, start.hIn.y, start.x, start.y);
+          ctx.closePath();
+          ctx.fill();
+        }
+
+        ctx.stroke();
+        ctx.restore();
+
+        // 4. Draw Live Dynamic Preview Line (from last node to mouse cursor)
+        if (!isClosed && !isDragging) {
+          const last = userNodes[userNodes.length - 1];
+          ctx.save();
+          ctx.strokeStyle = 'rgba(0, 229, 255, 0.5)';
+          ctx.lineWidth = 2;
+          ctx.setLineDash([4, 4]);
+
+          ctx.beginPath();
+          ctx.moveTo(last.x, last.y);
+
+          if (isStartNodeHovered && userNodes.length >= 3) {
+            const start = userNodes[0];
+            ctx.bezierCurveTo(last.hOut.x, last.hOut.y, start.hIn.x, start.hIn.y, start.x, start.y);
+          } else {
+            ctx.bezierCurveTo(last.hOut.x, last.hOut.y, mousePos.x, mousePos.y, mousePos.x, mousePos.y);
+          }
+          ctx.stroke();
+          ctx.restore();
+        }
+
+        // 5. Draw Anchor Points & Control Handles
+        userNodes.forEach((n, idx) => {
+          // Draw Handle Lines
+          ctx.save();
+          ctx.strokeStyle = '#ff007f';
+          ctx.lineWidth = 1.5;
+
+          if (n.hIn.x !== n.x || n.hIn.y !== n.y) {
+            ctx.beginPath();
+            ctx.moveTo(n.x, n.y);
+            ctx.lineTo(n.hIn.x, n.hIn.y);
+            ctx.stroke();
+
+            // Handle In Dot
+            ctx.fillStyle = '#ff79c6';
+            ctx.beginPath();
+            ctx.arc(n.hIn.x, n.hIn.y, 4, 0, Math.PI * 2);
+            ctx.fill();
+          }
+
+          if (n.hOut.x !== n.x || n.hOut.y !== n.y) {
+            ctx.beginPath();
+            ctx.moveTo(n.x, n.y);
+            ctx.lineTo(n.hOut.x, n.hOut.y);
+            ctx.stroke();
+
+            // Handle Out Dot
+            ctx.fillStyle = '#ff79c6';
+            ctx.beginPath();
+            ctx.arc(n.hOut.x, n.hOut.y, 4, 0, Math.PI * 2);
+            ctx.fill();
+          }
+          ctx.restore();
+
+          // Anchor Point Circle
+          ctx.save();
+          ctx.fillStyle = (idx === 0 && !isClosed) ? '#00ff99' : '#ffffff';
+          ctx.strokeStyle = '#00e5ff';
+          ctx.lineWidth = 2.5;
+
+          ctx.beginPath();
+          ctx.arc(n.x, n.y, 6, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.stroke();
+
+          // Start node hover pulsing ring indicator
+          if (idx === 0 && !isClosed && (isStartNodeHovered || userNodes.length >= 3)) {
+            ctx.strokeStyle = '#00ff99';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(n.x, n.y, 12, 0, Math.PI * 2);
+            ctx.stroke();
+          }
+
+          ctx.restore();
+        });
+      }
+    }
+
+    function drawLevelTargetPath(context, level) {
+      const nodes = level.nodes;
+      context.moveTo(nodes[0].x, nodes[0].y);
+      for (let i = 0; i < nodes.length; i++) {
+        const curr = nodes[i];
+        const next = nodes[(i + 1) % nodes.length];
+        context.bezierCurveTo(curr.hOut.x, curr.hOut.y, next.hIn.x, next.hIn.y, next.x, next.y);
+      }
+      context.closePath();
+    }
+
+    /* ====================================================================
+       UI & LEVEL MANAGEMENT
+       ==================================================================== */
+    function loadLevel(idx) {
+      currentLevelIndex = idx;
+      userNodes = [];
+      isClosed = false;
+
+      const level = LEVELS[idx];
+      document.getElementById('level-title').innerText = level.title;
+      document.getElementById('level-subtitle').innerText = level.subtitle;
+      document.getElementById('node-max').innerText = level.maxNodes;
+
+      // Update active level tab buttons
+      document.querySelectorAll('.lvl-btn').forEach((btn, i) => {
+        if (i === idx) {
+          btn.className = "lvl-btn px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center space-x-1.5 whitespace-nowrap bg-cyan-500/20 text-cyan-300 border border-cyan-500/30";
+        } else {
+          btn.className = "lvl-btn px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-slate-200 transition-all flex items-center space-x-1.5 whitespace-nowrap";
+        }
+      });
+
+      updateInstruction("Click anywhere to place your first anchor point.");
+      updateUI();
+      render();
+    }
+
+    function undoNode() {
+      if (userNodes.length > 0) {
+        userNodes.pop();
+        isClosed = false;
+        synth.playReset();
+        updateUI();
+        updateInstruction("Last node undone.");
+        render();
+      }
+    }
+
+    function resetLevel() {
+      userNodes = [];
+      isClosed = false;
+      synth.playReset();
+      updateUI();
+      updateInstruction("Level reset. Click to place your first point.");
+      render();
+    }
+
+    function toggleSplitMode() {
+      isSplitMode = !isSplitMode;
+      updateSplitBadge();
+      synth.playClick();
+    }
+
+    function updateSplitBadge() {
+      const active = isSplitMode || isAltPressed;
+      const statusEl = document.getElementById('split-status');
+      const badgeEl = document.getElementById('split-mode-badge');
+
+      if (active) {
+        statusEl.innerText = "ON";
+        statusEl.className = "text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-pink-500/30 text-pink-300";
+        badgeEl.classList.remove('hidden');
+      } else {
+        statusEl.innerText = "OFF";
+        statusEl.className = "text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-slate-700 text-slate-400";
+        badgeEl.classList.add('hidden');
+      }
+    }
+
+    function toggleHints() {
+      showHints = !showHints;
+      const statusEl = document.getElementById('hints-status');
+      if (showHints) {
+        statusEl.innerText = "ON";
+        statusEl.className = "text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-amber-500/20 text-amber-300";
+      } else {
+        statusEl.innerText = "OFF";
+        statusEl.className = "text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-slate-700 text-slate-400";
+      }
+      synth.playClick();
+      render();
+    }
+
+    function updateUI() {
+      document.getElementById('node-count').innerText = userNodes.length;
+    }
+
+    function updateInstruction(text) {
+      document.getElementById('instruction-text').innerText = text;
+    }
+
+    function updateTotalScore() {
+      const sum = levelScores.reduce((a, b) => a + b, 0);
+      const avg = Math.round(sum / LEVELS.length);
+      document.getElementById('total-score-display').innerText = avg + "%";
+
+      // Update tab stars
+      levelScores.forEach((score, idx) => {
+        const el = document.getElementById(`star-lvl-${idx}`);
+        if (score >= 90) el.innerText = "★★★";
+        else if (score >= 75) el.innerText = "★★";
+        else if (score >= 50) el.innerText = "★";
+        else el.innerText = "";
+      });
+    }
+
+    function showCompletionModal(score) {
+      const level = LEVELS[currentLevelIndex];
+      document.getElementById('modal-score').innerText = score + "%";
+      document.getElementById('modal-nodes-stat').innerText = `${userNodes.length} / ${level.maxNodes} Nodes Used`;
+
+      // Stars
+      const starsEl = document.getElementById('modal-stars');
+      if (score >= 90) {
+        starsEl.innerHTML = '<i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>';
+        synth.playSuccess();
+      } else if (score >= 75) {
+        starsEl.innerHTML = '<i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-regular fa-star"></i>';
+        synth.playSuccess();
+      } else {
+        starsEl.innerHTML = '<i class="fa-solid fa-star"></i><i class="fa-regular fa-star"></i><i class="fa-regular fa-star"></i>';
+        synth.playClick();
+      }
+
+      const modal = document.getElementById('completion-modal');
+      modal.classList.remove('hidden');
+    }
+
+    function closeModal() {
+      document.getElementById('completion-modal').classList.add('hidden');
+    }
+
+    function nextLevel() {
+      closeModal();
+      if (currentLevelIndex < LEVELS.length - 1) {
+        loadLevel(currentLevelIndex + 1);
+      } else {
+        loadLevel(0);
+      }
+    }
+
+    // Initialize Game on Window Load
+    window.onload = () => {
+      loadLevel(0);
+    };
+  </script>
+</body>
+</html>
